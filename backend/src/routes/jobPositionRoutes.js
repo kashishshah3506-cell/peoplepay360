@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Import your controller functions (Ensure these exist in your controller file!)
+// 1. Import your job position controller functions
 const { getJobPositions, createJobPosition, updateJobPosition, deleteJobPosition } = require('../controllers/jobPositionController');
 
-// 2. Import your working default authentication middleware
-const authMiddleware = require('../middleware/authMiddleware');
+// 2. CORRECT FIXED IMPORT: Destructure both middleware functions inside curly braces
+const { authMiddleware, authorize } = require('../middleware/authMiddleware');
 
-// 3. Define routes using the working authMiddleware function
+// 3. Mount routes using the working variables
 router.get('/', authMiddleware, getJobPositions);
-router.post('/', authMiddleware, createJobPosition);
-router.put('/:id', authMiddleware, updateJobPosition);
-router.delete('/:id', authMiddleware, deleteJobPosition);
+router.post('/', authMiddleware, authorize('Admin', 'HR Manager'), createJobPosition);
+router.put('/:id', authMiddleware, authorize('Admin', 'HR Manager'), updateJobPosition);
+router.delete('/:id', authMiddleware, authorize('Admin', 'HR Manager'), deleteJobPosition);
 
-// 4. CRITICAL: Only export the router instance!
+// 4. Export the router instance cleanly
 module.exports = router;
