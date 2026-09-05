@@ -1,24 +1,78 @@
-const express = require('express');
-const router = express.Router();
-const salaryStructureController = require('../controllers/salaryStructureController');
-const { authMiddleware, authorize } = require('../middleware/authMiddleware');
+const pool = require('../config/db');
 
-// Base endpoints (Checking if functions exist to completely prevent startup crashes)
-if (salaryStructureController.getSalaryStructures) {
-    router.get('/', authMiddleware, salaryStructureController.getSalaryStructures);
-}
-if (salaryStructureController.createSalaryStructure) {
-    router.post('/', authMiddleware, authorize('Admin', 'HR Manager'), salaryStructureController.createSalaryStructure);
-}
+const getStructures = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT ss.*,
+        (SELECT COUNT(*) FROM salary_rules sr WHERE sr.structure_id = ss.id) AS rule_count,
+        (SELECT COUNT(*) FROM contracts c WHERE c.salary_structure_id = ss.id AND c.status = 'Running') AS employee_count
+      FROM salary_structures ss
+      ORDER BY ss.name
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-// FIXES YOUR CURRENT ERROR AND PREVENTS CRASHES
-// If getSalaryStructureById doesn't exist in your controller yet, it safely falls back to a clean inline response instead of crashing!
-const getByIdHandler = salaryStructureController.getSalaryStructureById 
-  || ((req, res) => res.json({ 
-      message: `Salary structure route is active for ID ${req.params.id}, but database fetching function is missing!`,
-      idReceived: req.params.id 
-     }));
+const getStructureById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const structure = await pool.query('SELECT * FROM salary_structures WHERE id = $1', [id]);
+    if (structure.rows.length === 0) {
+      return res.status(404).json({ message: 'Salary structure not found' });
+    }
 
-router.get('/:id', authMiddleware, getByIdHandler);
+    const rules = await pool.query(
+      'SELECT * FROM salary_rules WHERE structure_id = $1 ORDER BY sequence ASC',
+      [id]
+    );
 
-module.exports = router;
+    res.json({ ...structure.rows[0], rules: rules.rows });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const createStructure = async (req, res) => {
+  const { name, description, is_active } = req.body;
+  if (!name) return res.status(400).json({ message: 'Name is required' });
+
+  try {
+    const result = await pool.query(
+      'INSERT INTO salary_structures (name, description, is_active) VALUES ($1,$2,$3) RETURNING *',
+      [name, description || null, is_active !== false]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const updateStructure = async (req, res) => {
+  const { id } = req.params;
+  const { name, description, is_active } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE salary_structures SET name = $1, description = $2, is_active = $3 WHERE id = $4 RETURNING *',
+      [name, description, is_active, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Salary structure not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const deleteStructure = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM salary_structures WHERE id = $1 RETURNING *', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Salary structure not found' });
+    res.json({ message: 'Salary structure deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { getStructures, getStructureById, createStructure, updateStructure, deleteStructure };

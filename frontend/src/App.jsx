@@ -9,31 +9,37 @@ import Contracts from './pages/Contracts';
 import Attendance from './pages/Attendance';
 import TimeOff from './pages/TimeOff';
 import Payroll from './pages/Payroll';
-
+import EmployeeDetail from './pages/EmployeeDetail';
+import Schedules from './pages/Schedules';
+import ErrorBoundary from './components/ErrorBoundary';
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/login" element={<Login />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/contracts" element={<Contracts />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/time-off" element={<TimeOff />} />
-            <Route path="/payroll" element={<Payroll />} />
-          </Route>
+            <Route
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/employees/:id" element={<EmployeeDetail />} />
+              <Route path="/contracts" element={<Contracts />} />
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/time-off" element={<TimeOff />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/schedules" element={<Schedules />} />
+            </Route>
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </BrowserRouter>
   );

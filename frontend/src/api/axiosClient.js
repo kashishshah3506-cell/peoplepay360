@@ -4,7 +4,6 @@ const axiosClient = axios.create({
   baseURL: 'http://localhost:5000/api',
 });
 
-// Attach JWT token to every request if present
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -13,7 +12,6 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401s globally — force logout
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {

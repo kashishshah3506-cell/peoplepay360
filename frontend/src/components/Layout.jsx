@@ -11,13 +11,14 @@ const Layout = () => {
   };
 
   const navItems = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Employees', path: '/employees' },
-    { label: 'Contracts', path: '/contracts' },
-    { label: 'Attendance', path: '/attendance' },
-    { label: 'Time Off', path: '/time-off' },
-    { label: 'Payroll', path: '/payroll' },
-  ];
+  { label: 'Dashboard', path: '/dashboard' },
+  { label: 'Employees', path: '/employees' },
+  { label: 'Contracts', path: '/contracts' },
+  { label: 'Schedules', path: '/schedules' },
+  { label: 'Attendance', path: '/attendance' },
+  { label: 'Time Off', path: '/time-off' },
+  { label: 'Payroll', path: '/payroll' },
+];
 
   return (
     <div className="flex h-screen bg-gray-50">
