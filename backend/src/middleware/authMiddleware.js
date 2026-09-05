@@ -11,7 +11,9 @@ const protect = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Change this line in your middleware if it doesn't match the controller's fallback
+const decoded = jwt.verify(token, process.env.JWT_SECRET || 'peoplepay360_super_secret_fallback_key');
+
     req.user = decoded; // { id, role, email }
     next();
   } catch (err) {
