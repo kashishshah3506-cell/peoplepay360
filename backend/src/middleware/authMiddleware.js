@@ -24,4 +24,9 @@ const authorize = (...allowedRoles) => {
   };
 };
 
-module.exports = { authMiddleware, authorize };
+// This matches your payslipRoutes file perfectly by exporting both protect and authMiddleware
+module.exports = { 
+  authMiddleware, 
+  protect: authMiddleware, 
+  authorize 
+};

@@ -17,6 +17,9 @@ const timeOffRequestRoutes = require('./routes/timeOffRequestRoutes');
 const app = express();
 const salaryStructureRoutes = require('./routes/salaryStructureRoutes');
 const salaryRuleRoutes = require('./routes/salaryRuleRoutes');
+const payrunRoutes = require('./routes/payrunRoutes');
+const payslipRoutes = require('./routes/payslipRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // --- 2. GLOBAL MIDDLEWARE ---
 app.use(cors());
@@ -45,6 +48,9 @@ app.use('/api/allocations', allocationRoutes);
 app.use('/api/time-off-requests', timeOffRequestRoutes);
 app.use('/api/salary-structures', salaryStructureRoutes);
 app.use('/api/salary-rules', salaryRuleRoutes);
+app.use('/api/payruns', payrunRoutes);
+app.use('/api/payslips', payslipRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // --- 5. START SERVER ---
 const PORT = process.env.PORT || 5000;
