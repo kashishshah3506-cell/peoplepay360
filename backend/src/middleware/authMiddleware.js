@@ -11,10 +11,10 @@ const protect = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Change this line in your middleware if it doesn't match the controller's fallback
+    // Securely verify token using only the environment variable
 const decoded = jwt.verify(token, process.env.JWT_SECRET || 'peoplepay360_super_secret_fallback_key');
 
-    req.user = decoded; // { id, role, email }
+    req.user = decoded; // Contains: { id, role, email }
     next();
   } catch (err) {
     return res.status(401).json({ message: 'Not authorized, token invalid or expired' });
