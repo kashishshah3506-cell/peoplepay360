@@ -1,8 +1,10 @@
+//Auth Controller-Handles user registeration and tokens
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 // Register a new user (typically done by Admin, but open here for setup)
+// Updated for git commit testing
 const registerUser = async (req, res) => {
   const { name, email, password, role } = req.body;
 
