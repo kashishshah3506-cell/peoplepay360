@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getProfile } = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.get('/profile', protect, getProfile);
+// Public Routes
+router.post('/register', authController.registerUser);
+router.post('/login', authController.loginUser);
+
+// Protected Route 
+// If it crashes here, one of the two variables above is missing/misspelled!
+router.get('/profile', authMiddleware, authController.getProfile);
 
 module.exports = router;
