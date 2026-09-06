@@ -63,11 +63,11 @@ const createEmployee = async (req, res) => {
 
   try {
     const result = await pool.query(`
-      INSERT INTO employees (name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, status, date_joined, user_id)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      RETURNING *
-    `, [name, email, phone || null, department_id || null, job_position_id || null, manager_id || null, working_schedule_id || null, status || 'Active', date_joined || new Date(), user_id || null]);
-
+      INSERT INTO employees (name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, employee_type, bank_account_number, bank_ifsc, bank_name, status, date_joined, user_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      RETURNING * 
+    `, [name, email, phone || null, department_id || null, job_position_id || null, manager_id || null, working_schedule_id || null, employee_type || 'Full-Time', bank_account_number || null, bank_ifsc || null, bank_name || null, status || 'Active', date_joined || new Date(), user_id || null]);
+    
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ message: 'Email already exists' });
@@ -77,17 +77,18 @@ const createEmployee = async (req, res) => {
 
 const updateEmployee = async (req, res) => {
   const { id } = req.params;
-  const { name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, status, date_joined } = req.body;
-
+  const { name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, employee_type, bank_account_number, bank_ifsc, bank_name, status, date_joined } = req.body;
+  
   try {
     const result = await pool.query(`
       UPDATE employees SET
         name = $1, email = $2, phone = $3, department_id = $4,
         job_position_id = $5, manager_id = $6, working_schedule_id = $7,
-        status = $8, date_joined = $9
-      WHERE id = $10
+        employee_type = $8, bank_account_number = $9, bank_ifsc = $10, bank_name = $11,
+        status = $12, date_joined = $13
+      WHERE id = $14
       RETURNING *
-    `, [name, email, phone, department_id || null, job_position_id || null, manager_id || null, working_schedule_id || null, status, date_joined, id]);
+    `, [name, email, phone, department_id || null, job_position_id || null, manager_id || null, working_schedule_id || null, employee_type || 'Full-Time', bank_account_number || null, bank_ifsc || null, bank_name || null, status, date_joined, id]);
 
     if (result.rows.length === 0) return res.status(404).json({ message: 'Employee not found' });
     res.json(result.rows[0]);
