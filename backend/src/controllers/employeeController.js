@@ -57,7 +57,7 @@ const getEmployeeById = async (req, res) => {
 };
 
 const createEmployee = async (req, res) => {
-  const { name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, status, date_joined, user_id } = req.body;
+ const { name, email, phone, department_id, job_position_id, manager_id, working_schedule_id, employee_type, bank_account_number, bank_ifsc, bank_name, status, date_joined, user_id } = req.body;
 
   if (!name || !email) return res.status(400).json({ message: 'Name and email are required' });
 
