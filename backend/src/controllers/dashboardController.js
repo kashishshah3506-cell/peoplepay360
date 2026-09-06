@@ -77,16 +77,16 @@ const getSalaryByDepartment = async (req, res) => {
       payslipFilter += ` AND e.employee_type = $${params.length}`;
     }
 
-    const salaryResult = await pool.query(`
-      SELECT
-        COALESCE(SUM(ps.net_salary), 0) AS total_net_paid,
-        COUNT(ps.id) AS payslip_count,
-        COALESCE(AVG(ps.net_salary), 0) AS avg_salary
+    const result = await pool.query(`
+      SELECT d.name AS department, COALESCE(SUM(ps.net_salary), 0) AS total_salary
       FROM payslips ps
       JOIN payruns p ON ps.payrun_id = p.id
       LEFT JOIN contracts c ON ps.contract_id = c.id
+      LEFT JOIN departments d ON c.department_id = d.id
       LEFT JOIN employees e ON ps.employee_id = e.id
-      WHERE ps.status IN ('Validated', 'Paid') ${payslipFilter}
+      WHERE ps.status IN ('Validated', 'Paid') ${filter}
+      GROUP BY d.name
+      ORDER BY total_salary DESC
     `, params);
 
     res.json(result.rows.map(r => ({ department: r.department || 'Unassigned', total_salary: parseFloat(r.total_salary) })));
@@ -223,7 +223,15 @@ const getTimeOffOverview = async (req, res) => {
 
 // Department Overview (headcount + salary combined)
 const getDepartmentOverview = async (req, res) => {
+  const { employee_type } = req.query;
   try {
+    const params = [];
+    let filter = '';
+    if (employee_type) {
+      params.push(employee_type);
+      filter = `WHERE e.employee_type = $${params.length}`;
+    }
+
     const result = await pool.query(`
       SELECT
         d.name AS department,
@@ -233,9 +241,10 @@ const getDepartmentOverview = async (req, res) => {
       LEFT JOIN employees e ON e.department_id = d.id
       LEFT JOIN contracts c ON c.employee_id = e.id AND c.status = 'Running'
       LEFT JOIN payslips ps ON ps.contract_id = c.id
+      ${filter}
       GROUP BY d.name
       ORDER BY d.name
-    `);
+    `, params);
 
     res.json(result.rows.map(r => ({
       department: r.department,
