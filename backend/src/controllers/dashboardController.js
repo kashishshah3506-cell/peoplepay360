@@ -2,8 +2,7 @@ const pool = require('../config/db');
 
 // KPI Cards: Total Net Salary Paid, Payslips Generated, Average Salary, Approved Time Off, Attendance Health
 const getKpis = async (req, res) => {
-  const { period_start, period_end, department_id , employee_id} = req.query;
-  try {
+    const { period_start, period_end, department_id, employee_type } = req.query;  try {
     const params = [];
     let payslipFilter = '';
     if (period_start && period_end) {
@@ -64,17 +63,17 @@ const getKpis = async (req, res) => {
 
 // Salary Cost by Department (bar chart data)
 const getSalaryByDepartment = async (req, res) => {
-  const { period_start, period_end, emplopyee_type } = req.query;
+  const { period_start, period_end, employee_type } = req.query;
   try {
     const params = [];
     let filter = '';
     if (period_start && period_end) {
       params.push(period_start, period_end);
-      filter = `AND p.period_start >= $1 AND p.period_end <= $2`;
+      filter += ` AND p.period_start >= $${params.length - 1} AND p.period_end <= $${params.length}`;
     }
     if (employee_type) {
       params.push(employee_type);
-      payslipFilter += ` AND e.employee_type = $${params.length}`;
+      filter += ` AND e.employee_type = $${params.length}`;
     }
 
     const result = await pool.query(`
