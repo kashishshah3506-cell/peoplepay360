@@ -73,12 +73,17 @@ const computePayslipLines = async (structureId, contract, workedDaysRatio) => {
     });
   }
 
-  const gross = lines.filter(l => l.category === 'Gross').reduce((s, l) => s + l.amount, 0)
-    || lines.filter(l => ['Basic', 'Allowance'].includes(l.category)).reduce((s, l) => s + l.amount, 0);
-  const deductions = lines.filter(l => l.category === 'Deduction').reduce((s, l) => s + l.amount, 0);
-  const net = lines.filter(l => l.category === 'Net').reduce((s, l) => s + l.amount, 0)
-    || (gross - deductions);
+  const grossLines = lines.filter(l => l.category === 'Gross');
+  const gross = grossLines.length > 0
+    ? grossLines.reduce((s, l) => s + l.amount, 0)
+    : lines.filter(l => ['Basic', 'Allowance'].includes(l.category)).reduce((s, l) => s + l.amount, 0);
 
+  const deductions = lines.filter(l => l.category === 'Deduction').reduce((s, l) => s + l.amount, 0);
+
+  const netLines = lines.filter(l => l.category === 'Net');
+  const net = netLines.length > 0
+    ? netLines.reduce((s, l) => s + l.amount, 0)
+    : (gross - deductions);
   return { lines, gross_salary: gross, total_deductions: deductions, net_salary: net };
 };
 

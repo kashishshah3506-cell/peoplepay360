@@ -1,30 +1,22 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware, authorize } = require('../middleware/authMiddleware');
+const {
+  getRequests,
+  createRequest,
+  updateRequestStatus,
+  deleteRequest,
+} = require('../controllers/timeOffRequestController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// Mock data to simulate current allocation state
-const mockAllocation = { remaining_balance: 17 };
+const HR_ROLES = ['Admin', 'HR Manager', 'HR Payroll User', 'HR Payroll Manager'];
 
-router.get('/', authMiddleware, (req, res) => res.json({ message: "Get time-off requests works!" }));
+// Employees submit their own requests; listing supports ?employee_id= filter for HR views
+router.get('/', protect, getRequests);
+router.post('/', protect, createRequest);
 
-// Create route: Receives the duration payload
-router.post('/', authMiddleware, (req, res) => {
-    const { duration } = req.body;
-    res.json({ message: "Time-off request created successfully", duration: duration || 25 });
-});
+// Approve/refuse is HR-tier only — this runs the real balance-deduction transaction
+router.put('/:id/status', protect, authorize(...HR_ROLES), updateRequestStatus);
 
-// FIXES YOUR TEST SCENARIO: Validates balance on approval
-router.put('/:id/status', authMiddleware, authorize('Admin', 'HR Manager'), (req, res) => {
-    const { status, duration } = req.body; // Expecting duration passed or looked up
-
-    // Business Logic Validation Rule: If duration (25) is greater than balance (17) -> Deny it!
-    if (status === 'Approved' && duration > mockAllocation.remaining_balance) {
-        return res.status(409).json({ 
-            message: `Insufficient balance. Requested: ${duration} days, Available: ${mockAllocation.remaining_balance} days.` 
-        });
-    }
-
-    res.json({ message: "Status updated successfully", status });
-});
+router.delete('/:id', protect, authorize(...HR_ROLES), deleteRequest);
 
 module.exports = router;

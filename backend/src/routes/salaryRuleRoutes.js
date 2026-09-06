@@ -1,13 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const { getRules, getRuleById, createRule, updateRule, deleteRule } = require('../controllers/salaryRuleController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// 1. Correct destructured middleware import
-const { authMiddleware, authorize } = require('../middleware/authMiddleware');
+// Per spec: HR Payroll User has read-only access; only Admin / HR Payroll Manager can write.
+const WRITE_ROLES = ['Admin', 'HR Payroll Manager'];
 
-// 2. Safe routes with inline handlers to prevent any "undefined" controller crashes
-router.get('/', authMiddleware, (req, res) => res.json({ message: "Get salary rules works!" }));
-router.post('/', authMiddleware, authorize('Admin', 'HR Manager'), (req, res) => res.json({ message: "Create salary rule works!" }));
-router.put('/:id', authMiddleware, authorize('Admin', 'HR Manager'), (req, res) => res.json({ message: "Update salary rule works!" }));
-router.delete('/:id', authMiddleware, authorize('Admin', 'HR Manager'), (req, res) => res.json({ message: "Delete salary rule works!" }));
+router.get('/', protect, getRules);           // supports ?structure_id= filter
+router.get('/:id', protect, getRuleById);
+router.post('/', protect, authorize(...WRITE_ROLES), createRule);
+router.put('/:id', protect, authorize(...WRITE_ROLES), updateRule);
+router.delete('/:id', protect, authorize(...WRITE_ROLES), deleteRule);
 
 module.exports = router;

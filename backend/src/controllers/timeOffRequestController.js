@@ -1,9 +1,17 @@
 const pool = require('../config/db');
 
 const getRequests = async (req, res) => {
-  const { employee_id } = req.query;
-  try {
-    let query = `
+  let { employee_id } = req.query;
+
+  if (req.user.role === 'Employee') {
+    const linked = await pool.query('SELECT id FROM employees WHERE user_id = $1', [req.user.id]);
+    if (linked.rows.length === 0) {
+      return res.status(403).json({ message: 'No employee record linked to this account' });
+    }
+    employee_id = linked.rows[0].id;
+  }
+
+  try {    let query = `
       SELECT r.*, e.name AS employee_name, t.name AS time_off_type_name, t.unit
       FROM time_off_requests r
       JOIN employees e ON r.employee_id = e.id
@@ -24,11 +32,21 @@ const getRequests = async (req, res) => {
 };
 
 const createRequest = async (req, res) => {
-  const { employee_id, time_off_type_id, start_date, end_date, duration, reason } = req.body;
+  let { employee_id, time_off_type_id, start_date, end_date, duration, reason } = req.body;
+
+  // If the caller is a plain Employee, force employee_id to their own record —
+  // never trust a client-supplied employee_id for self-service roles.
+  if (req.user.role === 'Employee') {
+    const linked = await pool.query('SELECT id FROM employees WHERE user_id = $1', [req.user.id]);
+    if (linked.rows.length === 0) {
+      return res.status(403).json({ message: 'No employee record linked to this account' });
+    }
+    employee_id = linked.rows[0].id;
+  }
+
   if (!employee_id || !time_off_type_id || !start_date || !end_date || !duration) {
     return res.status(400).json({ message: 'employee_id, time_off_type_id, start_date, end_date, and duration are required' });
   }
-
   try {
     const result = await pool.query(`
       INSERT INTO time_off_requests (employee_id, time_off_type_id, start_date, end_date, duration, reason, status)

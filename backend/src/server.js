@@ -51,7 +51,6 @@ app.use('/api/salary-rules', salaryRuleRoutes);
 app.use('/api/payruns', payrunRoutes);
 app.use('/api/payslips', payslipRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/job-positions', jobPositionRoutes);
 
 // --- 5. START SERVER ---
 const PORT = process.env.PORT || 5000;
