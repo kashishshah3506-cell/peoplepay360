@@ -134,29 +134,32 @@ const computePayrun = async (req, res) => {
       try {
         await client.query('BEGIN');
 
-        const contractResult = await client.query('SELECT * FROM contracts WHERE id = $1', [payslip.contract_id]);
+                const contractResult = await client.query('SELECT * FROM contracts WHERE id = $1', [payslip.contract_id]);
         const contract = contractResult.rows[0];
-        const employeeResult = await client.query('SELECT bank_account_number FROM employees WHERE id = $1', [payslip.employee_id]);
+
+        // Check for missing bank details — surfaced as a payslip warning per spec
+        const employeeResult = await client.query(
+          'SELECT bank_account_number FROM employees WHERE id = $1',
+          [payslip.employee_id]
+        );
         const missingBankDetails = !employeeResult.rows[0]?.bank_account_number;
 
         // Worked days ratio: (attendance-based in a fuller version); for now assume full period worked = 1.0
         // A more advanced version could pull actual attendance/time-off days here.
-        const totalDaysInPeriod = Math.round(
-          (new Date(payrun.period_end) - new Date(payrun.period_start)) / (1000*60*60*24)) + 1;
+        const periodDays = Math.round(
+          (new Date(payrun.period_end) - new Date(payrun.period_start)) / (1000 * 60 * 60 * 24)) + 1;
 
-        const presentResult = await client.query(
-          `SELECT COUNT(DISTINCT check_in::date) AS days_present
+        // Worked days ratio: real count of Present/Late/Overtime attendance days in this period
+        const presentResult = await client.query(`
+          SELECT COUNT(DISTINCT check_in::date) AS days_present
           FROM attendance
           WHERE employee_id = $1
             AND check_in::date BETWEEN $2 AND $3
-            AND status IN ('Present','Late','Overtime')`,
-          [payslip.employee_id, payrun.period_start, payrun.period_end]);
+            AND status IN ('Present','Late','Overtime')
+        `, [payslip.employee_id, payrun.period_start, payrun.period_end]);
 
         const daysPresent = parseInt(presentResult.rows[0].days_present) || 0;
-        const workedDaysRatio = totalDaysInPeriod > 0 ? daysPresent / totalDaysInPeriod : 0;
-        const periodDays = Math.round(
-          (new Date(payrun.period_end) - new Date(payrun.period_start)) / (1000 * 60 * 60 * 24)
-        ) + 1;
+        const workedDaysRatio = periodDays > 0 ? daysPresent / periodDays : 0;
 
         const { lines, gross_salary, total_deductions, net_salary } = await computePayslipLines(
           payrun.salary_structure_id, contract, workedDaysRatio
@@ -173,9 +176,14 @@ const computePayrun = async (req, res) => {
         await client.query(`
           UPDATE payslips SET
             worked_days = $1, gross_salary = $2, total_deductions = $3, net_salary = $4,
-            status = 'Computed', has_warning = $6, warning_message = $7
-          WHERE id = $5
-        `, [periodDays, gross_salary, total_deductions, net_salary, payslip.id]);
+            status = 'Computed', has_warning = $5, warning_message = $6
+          WHERE id = $7
+        `, [
+          periodDays, gross_salary, total_deductions, net_salary,
+          missingBankDetails,
+          missingBankDetails ? 'Missing bank details' : null,
+          payslip.id
+        ]);
 
         await client.query('COMMIT');
       } catch (err) {

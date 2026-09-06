@@ -27,6 +27,7 @@ const getKpis = async (req, res) => {
       FROM payslips ps
       JOIN payruns p ON ps.payrun_id = p.id
       LEFT JOIN contracts c ON ps.contract_id = c.id
+      LEFT JOIN employees e ON ps.employee_id = e.id
       WHERE ps.status IN ('Validated', 'Paid') ${payslipFilter}
     `, params);
 
@@ -63,7 +64,7 @@ const getKpis = async (req, res) => {
 
 // Salary Cost by Department (bar chart data)
 const getSalaryByDepartment = async (req, res) => {
-  const { period_start, period_end } = req.query;
+  const { period_start, period_end, emplopyee_type } = req.query;
   try {
     const params = [];
     let filter = '';
@@ -71,16 +72,21 @@ const getSalaryByDepartment = async (req, res) => {
       params.push(period_start, period_end);
       filter = `AND p.period_start >= $1 AND p.period_end <= $2`;
     }
+    if (employee_type) {
+      params.push(employee_type);
+      payslipFilter += ` AND e.employee_type = $${params.length}`;
+    }
 
-    const result = await pool.query(`
-      SELECT d.name AS department, COALESCE(SUM(ps.net_salary), 0) AS total_salary
+    const salaryResult = await pool.query(`
+      SELECT
+        COALESCE(SUM(ps.net_salary), 0) AS total_net_paid,
+        COUNT(ps.id) AS payslip_count,
+        COALESCE(AVG(ps.net_salary), 0) AS avg_salary
       FROM payslips ps
       JOIN payruns p ON ps.payrun_id = p.id
       LEFT JOIN contracts c ON ps.contract_id = c.id
-      LEFT JOIN departments d ON c.department_id = d.id
-      WHERE ps.status IN ('Validated', 'Paid') ${filter}
-      GROUP BY d.name
-      ORDER BY total_salary DESC
+      LEFT JOIN employees e ON ps.employee_id = e.id
+      WHERE ps.status IN ('Validated', 'Paid') ${payslipFilter}
     `, params);
 
     res.json(result.rows.map(r => ({ department: r.department || 'Unassigned', total_salary: parseFloat(r.total_salary) })));
