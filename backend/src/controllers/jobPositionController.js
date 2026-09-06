@@ -15,7 +15,7 @@ const getJobPositions = async (req, res) => {
 };
 
 const createJobPosition = async (req, res) => {
-  // Debug check: Log incoming data to backend terminal
+  // Debug checking when : Log incoming data to backend terminal 
   console.log("Incoming Payload:", req.body);
 
   if (!req.body) {
