@@ -62,79 +62,37 @@ const getPayslipById = async (req, res) => {
   }
 };
 
-// Generates and streams the PDF for direct download
 const printPayslip = async (req, res) => {
-    try {
-        const payslipId = req.params.id;
-        let payslip = null;
+  const { id } = req.params;
+  try {
+    const data = await getFullPayslipData(id);
+    if (!data) return res.status(404).json({ message: 'Payslip not found' });
 
-        // 1. Attempt database lookup if your Model is defined
-        if (typeof Payslip !== 'undefined') {
-            payslip = await Payslip.findById(payslipId).catch(() => null);
-        }
-
-        // 2. 👇 FIX: Instead of throwing a 404, provide mock data for testing IDs like '1'
-        if (!payslip) {
-            return res.status(200).json({
-                success: true,
-                message: `Payslip PDF generated successfully for ID ${payslipId} (Mock Data)`,
-                downloadUrl: `http://localhost:5000/exports/payslip-${payslipId}.pdf`,
-                data: {
-                    id: payslipId,
-                    employeeName: "John Doe",
-                    month: "September 2026",
-                    netPay: 4200.00
-                }
-            });
-        }
-
-        // 3. If real database entry is found, proceed normally
-        return res.status(200).json({
-            success: true,
-            message: `Payslip PDF generated successfully for ID ${payslipId}`,
-            downloadUrl: `http://localhost:5000/exports/payslip-${payslipId}.pdf`,
-            data: payslip
-        });
-
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
+    const filePath = await generatePayslipPDF(data);
+    res.download(filePath, `payslip_${data.employee_name.replace(/\s+/g, '_')}.pdf`, (err) => {
+      if (err) console.error('Download error:', err);
+      fs.unlink(filePath, () => {});
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-
-// Emails the payslip PDF to the employee
 const emailPayslip = async (req, res) => {
-    try {
-        const payslipId = req.params.id;
-        let payslip = null;
+  const { id } = req.params;
+  try {
+    const data = await getFullPayslipData(id);
+    if (!data) return res.status(404).json({ message: 'Payslip not found' });
 
-        // 1. Attempt database lookup if your Model is defined
-        if (typeof Payslip !== 'undefined') {
-            payslip = await Payslip.findById(payslipId).catch(() => null);
-        }
+    const filePath = await generatePayslipPDF(data);
+    const info = await sendPayslipEmail(data.employee_email, data.employee_name, data.payrun_name, filePath);
 
-        // 2. 👇 FIX: Instead of throwing a 404, provide mock success data for testing IDs like '1'
-        if (!payslip) {
-            return res.status(200).json({
-                success: true,
-                message: `Payslip for ID ${payslipId} successfully queued and sent to employee email (Mock Data)`,
-                recipient: "employee_test@example.com",
-                sentAt: new Date().toISOString()
-            });
-        }
+    fs.unlink(filePath, () => {});
 
-        // 3. If real database entry is found, proceed with actual mailing logic
-        // example: await sendEmail(payslip.employeeEmail, ...);
-        return res.status(200).json({
-            success: true,
-            message: `Payslip for ID ${payslipId} successfully queued and sent to employee email.`,
-            data: payslip
-        });
-
-    } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
-    }
+    res.json({ message: 'Payslip emailed successfully', previewUrl: require('nodemailer').getTestMessageUrl?.(info) || null });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
-
 
 module.exports = { getPayslips, getPayslipById, printPayslip, emailPayslip };

@@ -29,31 +29,32 @@ const TimeOff = () => {
   const canApprove = ['Admin', 'HR Manager'].includes(user?.role);
 
   const fetchAll = async () => {
-  setLoading(true);
-  try {
-    const [reqRes, allocRes, typeRes, empRes] = await Promise.all([
-      getTimeOffRequests(employeeIdFilter),
-      getAllocations(employeeIdFilter),
-      getTimeOffTypes(),
-      getEmployees(),
-    ]);
-    setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
-    setAllocations(Array.isArray(allocRes.data) ? allocRes.data : []);
-    setTypes(Array.isArray(typeRes.data) ? typeRes.data : []);
-    setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
-  } catch (err) {
-    console.error('Failed to fetch time off data', err);
-    setRequests([]);
-    setAllocations([]);
-    setTypes([]);
-    setEmployees([]);
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const [reqRes, allocRes, typeRes, empRes] = await Promise.all([
+        getTimeOffRequests(employeeIdFilter),
+        getAllocations(employeeIdFilter),
+        getTimeOffTypes(),
+        getEmployees(),
+      ]);
+      setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
+      setAllocations(Array.isArray(allocRes.data) ? allocRes.data : []);
+      setTypes(Array.isArray(typeRes.data) ? typeRes.data : []);
+      setEmployees(Array.isArray(empRes.data) ? empRes.data : []);
+    } catch (err) {
+      console.error('Failed to fetch time off data', err);
+      setRequests([]);
+      setAllocations([]);
+      setTypes([]);
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employeeIdFilter]);
 
   const handleRequestApproval = async (id, status) => {

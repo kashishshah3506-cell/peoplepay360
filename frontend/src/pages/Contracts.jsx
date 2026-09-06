@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getContracts, createContract, updateContract, deleteContract } from '../api/contractApi';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/Modal';
@@ -7,6 +7,7 @@ import ContractForm from '../components/ContractForm';
 
 const Contracts = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const employeeIdFilter = searchParams.get('employee_id');
 
   const [contracts, setContracts] = useState([]);
@@ -108,29 +109,39 @@ const Contracts = () => {
             </thead>
             <tbody>
               {contracts.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">{c.employee_name}</td>
-                  <td className="px-4 py-3 text-slate-600">{c.salary_structure_name || '—'}</td>
-                  <td className="px-4 py-3 text-slate-600">₹{parseFloat(c.wage).toLocaleString()}</td>
-                  <td className="px-4 py-3 text-slate-600">{new Date(c.start_date).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-slate-600">{c.end_date ? new Date(c.end_date).toLocaleDateString() : '—'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(c.status)}`}>
-                      {c.status}
-                    </span>
-                  </td>
-                  {canEdit && (
-                    <td className="px-4 py-3 text-right space-x-2">
-                      <button onClick={() => openEditModal(c)} className="text-slate-600 hover:text-slate-900 text-xs font-medium">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDelete(c.id)} className="text-red-600 hover:text-red-800 text-xs font-medium">
-                        Delete
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
+  <tr
+    key={c.id}
+    onClick={() => navigate(`/employees/${c.employee_id}`)}
+    className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+  >
+    <td className="px-4 py-3 font-medium text-slate-800">{c.employee_name}</td>
+    <td className="px-4 py-3 text-slate-600">{c.salary_structure_name || '—'}</td>
+    <td className="px-4 py-3 text-slate-600">₹{parseFloat(c.wage).toLocaleString()}</td>
+    <td className="px-4 py-3 text-slate-600">{new Date(c.start_date).toLocaleDateString()}</td>
+    <td className="px-4 py-3 text-slate-600">{c.end_date ? new Date(c.end_date).toLocaleDateString() : '—'}</td>
+    <td className="px-4 py-3">
+      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(c.status)}`}>
+        {c.status}
+      </span>
+    </td>
+    {canEdit && (
+      <td className="px-4 py-3 text-right space-x-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); openEditModal(c); }}
+          className="text-slate-600 hover:text-slate-900 text-xs font-medium"
+        >
+          Edit
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }}
+          className="text-red-600 hover:text-red-800 text-xs font-medium"
+        >
+          Delete
+        </button>
+      </td>
+    )}
+  </tr>
+))}
             </tbody>
           </table>
         )}

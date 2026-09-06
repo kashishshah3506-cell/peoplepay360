@@ -11,6 +11,7 @@ const Employees = () => {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
+  const [seeding, setSeeding] = useState(false); // Track job seeding state
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -31,6 +32,44 @@ const Employees = () => {
   useEffect(() => {
     fetchEmployees();
   }, []);
+
+  // --- STEP 2: Job Positions Seeding Logic ---
+  const handleSeedJobPositions = async () => {
+    setSeeding(true);
+    const token = localStorage.getItem('token'); 
+    
+    const jobsData = [
+      { title: "HR Manager", department_id: 3 },
+      { title: "HR Business Partner", department_id: 3 },
+      { title: "Software Engineer", department_id: 2 },
+      { title: "Senior Software Engineer", department_id: 2 }
+    ];
+
+    try {
+      const response = await fetch('http://localhost:5000/api/job-positions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(jobsData) 
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert('Job positions seeded successfully!');
+      } else {
+        alert(`Failed to seed: ${result.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error sending job positions:', error);
+      alert('Network error while seeding job positions.');
+    } finally {
+      setSeeding(false);
+    }
+  };
+  // -------------------------------------------
 
   const openCreateModal = () => {
     setEditingEmployee(null);
@@ -77,12 +116,23 @@ const Employees = () => {
           <p className="text-sm text-slate-500 mt-1">Manage your organization's workforce</p>
         </div>
         {canEdit && (
-          <button
-            onClick={openCreateModal}
-            className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium"
-          >
-            + New Employee
-          </button>
+          <div className="flex space-x-2">
+            {/* Added Seed Button next to New Employee */}
+            <button
+              onClick={handleSeedJobPositions}
+              disabled={seeding}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded text-sm font-medium border border-slate-300 disabled:opacity-50"
+            >
+              {seeding ? 'Seeding...' : 'Seed Job Positions'}
+            </button>
+            
+            <button
+              onClick={openCreateModal}
+              className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded text-sm font-medium"
+            >
+              + New Employee
+            </button>
+          </div>
         )}
       </div>
 

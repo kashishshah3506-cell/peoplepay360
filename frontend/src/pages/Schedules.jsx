@@ -91,24 +91,34 @@ const Schedules = () => {
               </tr>
             </thead>
             <tbody>
-              {schedules.map((s) => (
-                <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{s.schedule_type}</td>
-                  <td className="px-4 py-3 text-slate-600">{s.total_weekly_hours} hrs</td>
-                  <td className="px-4 py-3 text-slate-600">{s.company_name}</td>
-                  {canEdit && (
-                    <td className="px-4 py-3 text-right space-x-2">
-                      <button onClick={() => openEditModal(s)} className="text-slate-600 hover:text-slate-900 text-xs font-medium">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDelete(s.id)} className="text-red-600 hover:text-red-800 text-xs font-medium">
-                        Delete
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
+             {schedules.map((s) => (
+  <tr
+    key={s.id}
+    onClick={() => canEdit && openEditModal(s)}
+    className={`border-b border-slate-100 hover:bg-slate-50 ${canEdit ? 'cursor-pointer' : ''}`}
+  >
+    <td className="px-4 py-3 font-medium text-slate-800">{s.name}</td>
+    <td className="px-4 py-3 text-slate-600">{s.schedule_type}</td>
+    <td className="px-4 py-3 text-slate-600">{s.total_weekly_hours} hrs</td>
+    <td className="px-4 py-3 text-slate-600">{s.company_name}</td>
+    {canEdit && (
+      <td className="px-4 py-3 text-right space-x-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); openEditModal(s); }}
+          className="text-slate-600 hover:text-slate-900 text-xs font-medium"
+        >
+          Edit
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
+          className="text-red-600 hover:text-red-800 text-xs font-medium"
+        >
+          Delete
+        </button>
+      </td>
+    )}
+  </tr>
+))}
             </tbody>
           </table>
         )}

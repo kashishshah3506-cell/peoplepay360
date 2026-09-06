@@ -15,15 +15,38 @@ const getJobPositions = async (req, res) => {
 };
 
 const createJobPosition = async (req, res) => {
-  const { title, department_id } = req.body;
-  if (!title) return res.status(400).json({ message: 'Title is required' });
+  // Debug check: Log incoming data to backend terminal
+  console.log("Incoming Payload:", req.body);
+
+  if (!req.body) {
+    return res.status(400).json({ message: "No request body provided" });
+  }
+
+  // Convert single object to array so the same logic handles both options smoothly
+  const items = Array.isArray(req.body) ? req.body : [req.body];
+
+  // Validate that every single item has a title before proceeding
+  for (const item of items) {
+    if (!item.title) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+  }
 
   try {
-    const result = await pool.query(
-      'INSERT INTO job_positions (title, department_id) VALUES ($1, $2) RETURNING *',
-      [title, department_id || null]
-    );
-    res.status(201).json(result.rows[0]);
+    const insertedPositions = [];
+
+    // Loop through the entries and insert them safely into PostgreSQL
+    for (const item of items) {
+      const { title, department_id } = item;
+      const result = await pool.query(
+        'INSERT INTO job_positions (title, department_id) VALUES ($1, $2) RETURNING *',
+        [title, department_id || null]
+      );
+      insertedPositions.push(result.rows[0]);
+    }
+
+    // Return an array if multiple were sent, otherwise return just the single object
+    res.status(201).json(Array.isArray(req.body) ? insertedPositions : insertedPositions[0]);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

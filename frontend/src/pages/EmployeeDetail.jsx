@@ -25,11 +25,28 @@ const EmployeeDetail = () => {
   if (loading) return <div className="p-8 text-center text-slate-500">Loading...</div>;
   if (!employee) return <div className="p-8 text-center text-slate-500">Employee not found.</div>;
 
+  // Fallback pattern checks nested counts object, flat keys, or defaults to 0 safely
   const smartLinks = [
-    { label: 'Contracts', count: employee.counts?.contracts ?? 0, path: `/contracts?employee_id=${id}` },
-    { label: 'Attendance', count: employee.counts?.attendance ?? 0, path: `/attendance?employee_id=${id}` },
-    { label: 'Time Off', count: employee.counts?.time_off_requests ?? 0, path: `/time-off?employee_id=${id}` },
-    { label: 'Allocations', count: employee.counts?.allocations ?? 0, path: `/time-off?tab=allocations&employee_id=${id}` },
+    { 
+      label: 'Contracts', 
+      count: employee.counts?.contracts ?? employee.contracts_count ?? 0, 
+      path: `/contracts?employee_id=${id}` 
+    },
+    { 
+      label: 'Attendance', 
+      count: employee.counts?.attendance ?? employee.attendance_count ?? 0, 
+      path: `/attendance?employee_id=${id}` 
+    },
+    { 
+      label: 'Time Off', 
+      count: employee.counts?.time_off_requests ?? employee.time_off_count ?? 0, 
+      path: `/time-off?employee_id=${id}` 
+    },
+    { 
+      label: 'Allocations', 
+      count: employee.counts?.allocations ?? employee.allocations_count ?? 0, 
+      path: `/time-off?tab=allocations&employee_id=${id}` 
+    },
   ];
 
   return (
